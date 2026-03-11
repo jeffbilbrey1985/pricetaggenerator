@@ -336,14 +336,24 @@ const priceParts = str => {
 };
 
 function buildDescription(rec) {
-  // Split "Brand - Product Name - Color" or similar into name/desc lines
-  const full = (rec.description || '').trim();
-  // If there's a dash, split brand as name and rest as desc
-  const parts = full.split(/\s*-\s*/);
-  if (parts.length >= 2) {
-    return { name: parts[0].trim(), desc: parts.slice(1).join(' - ').trim() };
+  // If the record already has a real name field, use it directly
+  if (rec.name && rec.name.trim()) {
+    return { name: rec.name.trim(), desc: (rec.description || '').trim() };
   }
-  return { name: full, desc: '' };
+  // Otherwise parse the single description field
+  const full = (rec.description || '').trim();
+  const parts = full.split(/\s*-\s*/);
+  if (parts.length === 1) {
+    return { name: full, desc: '' };
+  }
+  if (parts.length === 2) {
+    return { name: parts[0].trim(), desc: parts[1].trim() };
+  }
+  // 3+ parts: combine brand + product as name, variant/device as desc
+  const brand = parts[0].trim();
+  const product = parts[1].trim();
+  const variant = parts.slice(2).join(', ').trim();
+  return { name: brand + ' ' + product, desc: variant };
 }
 
 function createTag(upc, rec) {
